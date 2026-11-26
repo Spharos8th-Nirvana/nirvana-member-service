@@ -1,0 +1,123 @@
+name: Work branch lifecycle
+
+on:
+  create:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [closed]
+    branches: [develop, main]
+
+permissions: {}
+
+jobs:
+  branch-issue:
+    if: github.event_name == 'create' && github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: issue-for-branch-${{ github.event.ref }}
+    permissions:
+      issues: write
+    outputs:
+      issue-id: ${{ steps.issue.outputs.id }}
+    steps:
+      - name: Find or create the issue
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.ref }}
+        run: |
+          set -euo pipefail
+          case "$BRANCH" in
+            feature/*|fix/*|bugfix/*|hotfix/*|refactor/*|chore/*|docs/*|test/*) ;;
+            *) exit 0 ;;
+          esac
+          if [[ "$BRANCH" =~ ^[^/]+/([1-9][0-9]*)([-/]|$) ]]; then
+            number="${BASH_REMATCH[1]}"
+            id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$number" \
+              --jq 'select(.state == "open" and (has("pull_request") | not)) | .node_id')"
+            if [[ -z "$id" ]]; then
+              echo "::error::Issue #$number must be open in this repository."
+              exit 1
+            fi
+          else
+            title="[Branch] $BRANCH"
+            id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" |
+              jq -sr --arg title "$title" \
+                '[.[][] | select(.title == $title and (has("pull_request") | not))][0].node_id // empty')"
+            if [[ -z "$id" ]]; then
+              id="$(gh api --method POST "repos/$GITHUB_REPOSITORY/issues" \
+                -f "title=$title" -f "body=Tracks work on branch $BRANCH." --jq '.node_id')"
+            fi
+          fi
+          printf 'id=%s\n' "$id" >> "$GITHUB_OUTPUT"
+
+  project:
+    needs: [branch-issue]
+    if: >-
+      always() && !cancelled() &&
+      (github.event_name == 'issues' || needs.branch-issue.outputs.issue-id != '')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issue to the NIRVANA project
+        env:
+          GH_TOKEN: ${{ secrets.NIRVANA_PROJECT_TOKEN }}
+          ISSUE_ID: ${{ github.event.issue.node_id || needs.branch-issue.outputs.issue-id }}
+          PROJECT_OWNER: Spharos8th-Nirvana
+          PROJECT_NUMBER: '5'
+        run: |
+          set -euo pipefail
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::Configure NIRVANA_PROJECT_TOKEN with Projects write access."
+            exit 1
+          fi
+          project_id="$(gh api graphql -f owner="$PROJECT_OWNER" -F number="$PROJECT_NUMBER" -f query='
+            query($owner: String!, $number: Int!) {
+              organization(login: $owner) { projectV2(number: $number) { id } }
+            }' --jq '.data.organization.projectV2.id // empty')"
+          if [[ -z "$project_id" ]]; then
+            echo "::error::NIRVANA project is inaccessible to NIRVANA_PROJECT_TOKEN."
+            exit 1
+          fi
+          gh api graphql -f project="$project_id" -f issue="$ISSUE_ID" -f query='
+            mutation($project: ID!, $issue: ID!) {
+              addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
+                item { id }
+              }
+            }' --jq '.data.addProjectV2ItemById.item.id'
+
+  close-issue:
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close the issue for the merged branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          case "$BRANCH" in
+            feature/*|fix/*|bugfix/*|hotfix/*|refactor/*|chore/*|docs/*|test/*) ;;
+            *) exit 0 ;;
+          esac
+          if [[ "$BRANCH" =~ ^[^/]+/([1-9][0-9]*)([-/]|$) ]]; then
+            number="${BASH_REMATCH[1]}"
+          else
+            number="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" |
+              jq -sr --arg title "[Branch] $BRANCH" \
+                '[.[][] | select(.title == $title and (has("pull_request") | not))][0].number // empty')"
+          fi
+          if [[ -z "$number" ]]; then
+            exit 0
+          fi
+          open_issue="$(gh api "repos/$GITHUB_REPOSITORY/issues/$number" \
+            --jq 'select(.state == "open" and (has("pull_request") | not)) | .number')"
+          if [[ -n "$open_issue" ]]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/$number" \
+              -f state=closed -f state_reason=completed --jq '.html_url'
+          fi
