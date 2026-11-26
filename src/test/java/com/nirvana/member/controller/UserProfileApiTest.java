@@ -179,7 +179,7 @@ class UserProfileApiTest {
 
     private ResultActions submit(String body) throws Exception {
         return mvc.perform(post(PATH, USER_UUID)
-                .header(UserProfileApi.SERVICE_CREDENTIAL, "example-service-token")
+                .header(UserProfileController.SERVICE_CREDENTIAL, "example-service-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
