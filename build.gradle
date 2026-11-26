@@ -28,6 +28,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'   // 헬스체크, 메트릭 등 운영 상태 확인
     implementation 'org.springframework.cloud:spring-cloud-starter-config'  // Config Server에서 서비스 설정 가져오기
     // =========================================================================
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    runtimeOnly 'com.mysql:mysql-connector-j'
     // API 문서화 - OpenAPI / Swagger UI
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0'  // OpenAPI 문서 생성 및 Swagger UI 제공
     // =========================================================================
