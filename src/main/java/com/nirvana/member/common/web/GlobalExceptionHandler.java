@@ -1,7 +1,8 @@
-package com.nirvana.member.exception;
+package com.nirvana.member.common.web;
 
-import com.nirvana.member.dto.response.ApiResponse;
-import com.nirvana.member.dto.request.IsoCountryCode;
+import com.nirvana.member.profile.exception.ErrorCode;
+import com.nirvana.member.profile.exception.ProfileException;
+import com.nirvana.member.profile.dto.IsoCountryCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;

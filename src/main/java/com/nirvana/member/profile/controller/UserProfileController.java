@@ -1,9 +1,9 @@
-package com.nirvana.member.controller;
+package com.nirvana.member.profile.controller;
 
-import com.nirvana.member.dto.request.ProfileRequest;
-import com.nirvana.member.dto.response.ApiResponse;
-import com.nirvana.member.dto.response.ProfileResponse;
-import com.nirvana.member.service.UserProfileService;
+import com.nirvana.member.profile.dto.ProfileRequest;
+import com.nirvana.member.common.web.ApiResponse;
+import com.nirvana.member.profile.dto.ProfileResponse;
+import com.nirvana.member.profile.service.UserProfileService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
