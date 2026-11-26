@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    name: Build JAR
+    name: Build and verify API docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,4 +17,4 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: bash ./gradlew --no-daemon bootJar
+      - run: bash ./gradlew --no-daemon build
