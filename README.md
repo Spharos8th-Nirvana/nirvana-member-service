@@ -1,15 +1,18 @@
-# 서비스 이름
+# nirvana-member-service
 
 ## 서비스 개요
 
-- 목적: <!-- 서비스 목적 -->
-- 담당자 / 백업 리뷰어: <!-- GitHub 사용자 또는 팀 -->
-- 소유 데이터와 운영 책임: <!-- 서비스 경계와 책임 -->
-- API 문서: [Swagger UI](http://localhost:8080/swagger-ui/index.html)
-- 기본 포트 / 헬스체크: `8080` / `GET /actuator/health`
+- 목적: 회원 도메인 기능을 담당한다.
+- 담당자 / 백업 리뷰어: 미정 — 팀 확인 후 기입
+- 소유 데이터와 운영 책임: 세부 데이터 소유 범위와 운영 책임은 팀 확인 후 기입
+- API 문서: [Swagger UI](http://localhost:8082/swagger-ui/index.html)
+- 기본 포트 / 헬스체크: `8082` (임시) / `GET /actuator/health`
 
-위 서비스 정보와 주소는 템플릿 값입니다.
-서비스 생성 후 실제 정보로 변경하세요.
+초기 설정 검증용 서비스이며 비즈니스 기능은 아직 구현하지 않았습니다.
+포트는 임시값이며 담당자·백업 리뷰어·세부 데이터 소유 범위는 미정입니다.
+현재 기본 local 실행에는 JDK 21이 필요하며 외부 인프라 연결은 추가하지 않았습니다.
+헬스 체크: http://localhost:8082/actuator/health
+Config Repo 연결 시 서비스 설정 파일 이름: `member-service.yml` (파일 생성·연동은 별도 작업)
 
 ## 서비스 레포 생성 후
 
