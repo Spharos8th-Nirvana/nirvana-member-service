@@ -4,6 +4,9 @@ import static org.hamcrest.Matchers.contains;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
@@ -16,6 +19,9 @@ import com.nirvana.member.profile.domain.UserProfile;
 import com.nirvana.member.profile.repository.UserProfileRepository;
 import java.sql.SQLException;
 import java.util.UUID;
+import org.hibernate.dialect.MySQLDialect;
+import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.exception.ConstraintViolationException.ConstraintKind;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -102,15 +108,24 @@ class UserProfileApiTest {
 
     @Test
     void rejectsUnknownIsoCountryCodeBeforeCheckingConflicts() throws Exception {
-        when(profiles.countActiveNickname("산책")).thenReturn(1L);
-
         expectError(submit(BODY.replace("kr", "ZZ")), 400, "INVALID_COUNTRY_CODE", "invalid-country-code");
+        verifyNoInteractions(profiles);
     }
 
     @Test
     void rejectsMissingServiceToken() throws Exception {
         expectError(mvc.perform(post(PATH, USER_UUID).contentType(MediaType.APPLICATION_JSON).content(BODY)),
                 401, "AUTHENTICATION_REQUIRED", "authentication-required");
+    }
+
+    @Test
+    void returnsExistingProfileWithoutAttemptingInsert() throws Exception {
+        when(profiles.existsByUserUuid(USER_UUID.toString())).thenReturn(true);
+
+        submit(BODY).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("PROFILE_ALREADY_EXISTS"));
+
+        verify(profiles, never()).saveAndFlush(any(UserProfile.class));
     }
 
     @Test
@@ -141,14 +156,33 @@ class UserProfileApiTest {
 
     @Test
     void reportsExistingProfileWhenInsertViolatesUuidKey() throws Exception {
-        var duplicate = new SQLException(
-                "Duplicate entry '" + USER_UUID + "' for key 'userProfiles.UK_userProfiles_userUuid'", "23000", 1062);
-        when(profiles.saveAndFlush(any(UserProfile.class)))
-                .thenThrow(new DataIntegrityViolationException("test duplicate UUID", duplicate));
+        rejectInsertWithDuplicateKey("UK_userProfiles_userUuid");
 
         submit(BODY)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("PROFILE_ALREADY_EXISTS"));
+    }
+
+    @Test
+    void doesNotClassifyAnUnknownUniqueConstraintAsProfileConflict() throws Exception {
+        rejectInsertWithDuplicateKey("userProfiles.UK_userProfiles_other");
+
+        submit(BODY)
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error.code").value("INTERNAL_ERROR"));
+    }
+
+    @Test
+    void doesNotInferAConstraintFromExceptionTextWhenHibernateHasNoName() throws Exception {
+        var sql = new SQLException(
+                "Duplicate entry '산책' for key 'userProfiles.UK_userProfiles_nicknameActive'", "23000", 1062);
+        var violation = new ConstraintViolationException("duplicate key", sql, ConstraintKind.UNIQUE, null);
+        when(profiles.saveAndFlush(any(UserProfile.class)))
+                .thenThrow(new DataIntegrityViolationException("test unnamed constraint", violation));
+
+        submit(BODY)
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error.code").value("INTERNAL_ERROR"));
     }
 
     @Test
@@ -185,10 +219,15 @@ class UserProfileApiTest {
     }
 
     private void rejectInsertWithDuplicateNickname() {
-        var duplicate = new SQLException(
-                "Duplicate entry '산책' for key 'userProfiles.UK_userProfiles_nicknameActive'", "23000", 1062);
+        rejectInsertWithDuplicateKey("userProfiles.UK_userProfiles_nicknameActive");
+    }
+
+    private void rejectInsertWithDuplicateKey(String key) {
+        var sql = new SQLException("Duplicate entry 'value' for key '" + key + "'", "23000", 1062);
+        var violation = new MySQLDialect().buildSQLExceptionConversionDelegate()
+                .convert(sql, "test duplicate key", "insert into userProfiles");
         when(profiles.saveAndFlush(any(UserProfile.class)))
-                .thenThrow(new DataIntegrityViolationException("test duplicate nickname", duplicate));
+                .thenThrow(new DataIntegrityViolationException("test duplicate key", violation));
     }
 
     private void expectError(ResultActions result, int statusCode, String errorCode, String snippet) throws Exception {
