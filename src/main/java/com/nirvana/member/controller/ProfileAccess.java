@@ -1,7 +1,7 @@
-package com.nirvana.member.profile.controller;
+package com.nirvana.member.controller;
 
-import com.nirvana.member.profile.exception.ErrorCode;
-import com.nirvana.member.profile.exception.ProfileException;
+import com.nirvana.member.exception.ErrorCode;
+import com.nirvana.member.exception.ProfileException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import org.springframework.beans.factory.annotation.Value;

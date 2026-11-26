@@ -1,4 +1,4 @@
-package com.nirvana.member.profile.controller;
+package com.nirvana.member.controller;
 
 import static org.hamcrest.Matchers.contains;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,8 +12,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.nirvana.member.profile.domain.UserProfile;
-import com.nirvana.member.profile.repository.UserProfileRepository;
+import com.nirvana.member.domain.UserProfile;
+import com.nirvana.member.repository.UserProfileRepository;
 import java.sql.SQLException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;

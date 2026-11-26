@@ -1,8 +1,8 @@
-package com.nirvana.member.profile.controller;
+package com.nirvana.member.controller;
 
-import com.nirvana.member.profile.dto.ProfileRequest;
-import com.nirvana.member.common.web.ApiResponse;
-import com.nirvana.member.profile.dto.ProfileResponse;
+import com.nirvana.member.dto.request.ProfileRequest;
+import com.nirvana.member.dto.response.ApiResponse;
+import com.nirvana.member.dto.response.ProfileResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

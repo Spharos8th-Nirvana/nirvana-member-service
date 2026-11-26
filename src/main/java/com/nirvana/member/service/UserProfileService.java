@@ -1,9 +1,9 @@
-package com.nirvana.member.profile.service;
+package com.nirvana.member.service;
 
-import com.nirvana.member.profile.domain.UserProfile;
-import com.nirvana.member.profile.exception.ErrorCode;
-import com.nirvana.member.profile.exception.ProfileException;
-import com.nirvana.member.profile.repository.UserProfileRepository;
+import com.nirvana.member.domain.UserProfile;
+import com.nirvana.member.exception.ErrorCode;
+import com.nirvana.member.exception.ProfileException;
+import com.nirvana.member.repository.UserProfileRepository;
 import java.sql.SQLException;
 import java.util.UUID;
 import java.util.regex.Pattern;

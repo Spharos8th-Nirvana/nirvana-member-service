@@ -1,4 +1,4 @@
-package com.nirvana.member.common.web;
+package com.nirvana.member.dto.response;
 
 public record ApiResponse<T>(boolean success, T data, ApiError error) {
     public static <T> ApiResponse<T> ok(T data) {
