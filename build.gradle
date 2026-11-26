@@ -64,7 +64,11 @@ def restDocs = tasks.register('restDocs') {
             'authentication-required': '401 서비스 인증 실패',
             'profile-already-exists': '409 같은 UUID의 프로필 존재',
             'nickname-taken': '409 닉네임 중복',
-            'internal-error': '500 서버 오류'
+            'internal-error': '500 서버 오류',
+            'read-found': '200 프로필 조회',
+            'read-invalid-uuid': '400 프로필 조회 UUID 형식 오류',
+            'read-authentication-required': '401 프로필 조회 서비스 인증 실패',
+            'read-not-found': '404 활성 프로필 없음'
         ]
         def sections = scenarios.collect { scenario, heading ->
             def directory = snippetsDir.get().dir("profiles/$scenario")
@@ -74,7 +78,7 @@ def restDocs = tasks.register('restDocs') {
         }
         def output = document.get().asFile
         output.parentFile.mkdirs()
-        output.setText("# 일반 회원 프로필 생성 API\n\n" + sections.join('\n\n'), 'UTF-8')
+        output.setText("# 일반 회원 프로필 API\n\n" + sections.join('\n\n'), 'UTF-8')
     }
 }
 

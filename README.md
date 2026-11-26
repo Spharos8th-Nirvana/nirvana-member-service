@@ -47,6 +47,8 @@ Config Repo 연결 시 서비스 설정 파일 이름: `member-service.yml` (파
 
 Auth는 `POST /internal/profiles/{userUuid}`를 호출하고 `X-Member-Service-Token` 헤더를 전달합니다. 토큰은 Member의 `MEMBER_ACCESS_AUTH_SECRET`과 일치해야 합니다. 본문에는 `name`, `nickname`, 선택 항목 `countryCode`를 JSON으로 보냅니다. 생성에 성공하면 같은 UUID의 프로필과 함께 `201 Created`를 반환합니다.
 
+`GET /internal/profiles/{userUuid}`는 동일한 서비스 토큰을 사용해 활성 프로필을 조회합니다. 삭제된 프로필이나 존재하지 않는 UUID에는 `404 PROFILE_NOT_FOUND`를 반환합니다.
+
 MySQL 접속은 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`로 설정합니다. 기본 주소는 `127.0.0.1:13306`입니다.
 
 ## 빌드·테스트
@@ -69,7 +71,7 @@ develop·main 대상 PR의 CI는 빌드, 테스트, REST Docs 생성을 실행�
 ### API 문서
 
 - local 프로필에서 Swagger UI는 `http://localhost:8082/swagger-ui/index.html`, OpenAPI JSON은 `http://localhost:8082/v3/api-docs`에서 확인할 수 있습니다.
-- `./gradlew restDocs` 또는 Windows에서 `.\gradlew.bat restDocs`를 실행하면 테스트를 거쳐 `build/docs/member-api.md`를 생성합니다. 문서에는 프로필 등록과 오류별 HTTP 요청·응답 예시가 포함됩니다. `.\gradlew.bat build`에도 같은 검증이 포함됩니다.
+- `./gradlew restDocs` 또는 Windows에서 `.\gradlew.bat restDocs`를 실행하면 테스트를 거쳐 `build/docs/member-api.md`를 생성합니다. 문서에는 프로필 등록·조회와 오류별 HTTP 요청·응답 예시가 포함됩니다. `.\gradlew.bat build`에도 같은 검증이 포함됩니다.
 
 ## 개발 규칙
 

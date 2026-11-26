@@ -1,6 +1,7 @@
 package com.nirvana.member.service;
 
 import com.nirvana.member.domain.UserProfile;
+import com.nirvana.member.dto.result.ProfileResult;
 import com.nirvana.member.exception.ErrorCode;
 import com.nirvana.member.exception.ProfileException;
 import com.nirvana.member.repository.UserProfileRepository;
@@ -11,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
@@ -28,6 +30,14 @@ public class UserProfileService {
         this.profiles = profiles;
         this.transaction = new TransactionTemplate(transactionManager);
         this.transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    @Transactional(readOnly = true)
+    public ProfileResult get(UUID userUuid) {
+        UserProfile profile = profiles.findByUserUuidAndDeletedAtIsNull(userUuid.toString())
+                .orElseThrow(() -> new ProfileException(ErrorCode.PROFILE_NOT_FOUND));
+        return new ProfileResult(profile.getUserUuid(), profile.getName(), profile.getNickname(),
+                profile.getCountryCode());
     }
 
     public UserProfile create(UUID userUuid, String name, String nickname, String countryCode) {

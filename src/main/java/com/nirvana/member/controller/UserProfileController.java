@@ -1,6 +1,7 @@
 package com.nirvana.member.controller;
 
 import com.nirvana.member.dto.request.ProfileRequest;
+import com.nirvana.member.dto.result.ProfileResult;
 import com.nirvana.member.dto.response.ApiResponse;
 import com.nirvana.member.dto.response.ProfileResponse;
 import com.nirvana.member.service.UserProfileService;
@@ -9,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,5 +36,15 @@ class UserProfileController implements UserProfileApi {
         access.requireAuth(credential);
         return ApiResponse.ok(ProfileResponse.from(profiles.create(
                 userUuid, request.name(), request.nickname(), request.normalizedCountryCode())));
+    }
+    @Override
+    @GetMapping(path = "/internal/profiles/{userUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<ProfileResponse> get(
+            @RequestHeader(name = SERVICE_CREDENTIAL, required = false) String credential,
+            @PathVariable("userUuid") UUID userUuid) {
+        access.requireAuth(credential);
+        ProfileResult profile = profiles.get(userUuid);
+        return ApiResponse.ok(new ProfileResponse(profile.userUuid(), profile.name(), profile.nickname(),
+                profile.countryCode()));
     }
 }

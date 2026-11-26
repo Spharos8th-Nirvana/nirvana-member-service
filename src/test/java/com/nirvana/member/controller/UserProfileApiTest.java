@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
@@ -15,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.nirvana.member.domain.UserProfile;
 import com.nirvana.member.repository.UserProfileRepository;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -160,6 +162,47 @@ class UserProfileApiTest {
     }
 
     @Test
+    void returnsActiveProfile() throws Exception {
+        when(profiles.findByUserUuidAndDeletedAtIsNull(USER_UUID.toString()))
+                .thenReturn(Optional.of(new UserProfile(USER_UUID, "테스트 회원", "산책", "KR")));
+
+        mvc.perform(get(PATH, USER_UUID).header(UserProfileController.SERVICE_CREDENTIAL, "example-service-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.userUuid").value(USER_UUID.toString()))
+                .andExpect(jsonPath("$.data.name").value("테스트 회원"))
+                .andExpect(jsonPath("$.data.nickname").value("산책"))
+                .andExpect(jsonPath("$.data.countryCode").value("KR"))
+                .andDo(document("profiles/read-found"));
+    }
+
+    @Test
+    void returnsNotFoundWithoutAnActiveProfile() throws Exception {
+        when(profiles.findByUserUuidAndDeletedAtIsNull(USER_UUID.toString())).thenReturn(Optional.empty());
+
+        expectError(mvc.perform(get(PATH, USER_UUID)
+                        .header(UserProfileController.SERVICE_CREDENTIAL, "example-service-token")),
+                404, "PROFILE_NOT_FOUND", "read-not-found");
+    }
+
+    @Test
+    void rejectsProfileReadWithoutServiceToken() throws Exception {
+        expectError(mvc.perform(get(PATH, USER_UUID)),
+                401, "AUTHENTICATION_REQUIRED", "read-authentication-required");
+
+        verifyNoInteractions(profiles);
+    }
+
+    @Test
+    void rejectsProfileReadWithInvalidUuid() throws Exception {
+        expectError(mvc.perform(get(PATH, "not-a-uuid")
+                        .header(UserProfileController.SERVICE_CREDENTIAL, "example-service-token")),
+                400, "VALIDATION_FAILED", "read-invalid-uuid");
+
+        verifyNoInteractions(profiles);
+    }
+
+    @Test
     void exposesInterfaceDocumentationInOpenApi() throws Exception {
         String operation = "$.paths['/internal/profiles/{userUuid}'].post";
 
@@ -174,7 +217,9 @@ class UserProfileApiTest {
                 .andExpect(jsonPath(operation + ".responses['401']").exists())
                 .andExpect(jsonPath(operation + ".responses['409'].description")
                         .value("PROFILE_ALREADY_EXISTS 또는 NICKNAME_TAKEN"))
-                .andExpect(jsonPath(operation + ".responses['500']").exists());
+                .andExpect(jsonPath(operation + ".responses['500']").exists())
+                .andExpect(jsonPath("$.paths['" + PATH + "'].get.responses['200'].content['application/json']").exists())
+                .andExpect(jsonPath("$.paths['" + PATH + "'].get.responses['404'].description").value("PROFILE_NOT_FOUND"));
     }
 
     private ResultActions submit(String body) throws Exception {
