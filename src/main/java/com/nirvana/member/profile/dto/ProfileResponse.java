@@ -1,6 +1,6 @@
-package com.nirvana.member.dto.response;
+package com.nirvana.member.profile.dto;
 
-import com.nirvana.member.domain.UserProfile;
+import com.nirvana.member.profile.domain.UserProfile;
 import java.util.UUID;
 
 public record ProfileResponse(UUID userUuid, String name, String nickname, String countryCode) {

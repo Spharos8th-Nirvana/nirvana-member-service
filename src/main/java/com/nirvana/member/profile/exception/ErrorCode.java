@@ -1,4 +1,4 @@
-package com.nirvana.member.exception;
+package com.nirvana.member.profile.exception;
 
 import org.springframework.http.HttpStatus;
 

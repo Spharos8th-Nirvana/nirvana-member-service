@@ -1,6 +1,6 @@
-package com.nirvana.member.repository;
+package com.nirvana.member.profile.repository;
 
-import com.nirvana.member.domain.UserProfile;
+import com.nirvana.member.profile.domain.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
