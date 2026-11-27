@@ -45,9 +45,18 @@ Config Repo 연결 시 서비스 설정 파일 이름: `member-service.yml` (파
 
 ## 일반 회원 프로필 생성 API
 
-Auth는 `POST /internal/profiles/{userUuid}`를 호출하고 `X-Member-Service-Token` 헤더를 전달합니다. 토큰은 Member의 `MEMBER_ACCESS_AUTH_SECRET`과 일치해야 합니다. 본문에는 `name`, `nickname`, 선택 항목 `countryCode`를 JSON으로 보냅니다. 생성에 성공하면 같은 UUID의 프로필과 함께 `201 Created`를 반환합니다.
+내부 HTTP API `POST /internal/profiles/{userUuid}`는 `X-Member-Service-Token` 헤더를 받습니다. 토큰은 Member의 `MEMBER_ACCESS_AUTH_SECRET`과 일치해야 합니다. 본문에는 `name`, `nickname`, 선택 항목 `countryCode`를 JSON으로 보냅니다. 생성에 성공하면 같은 UUID의 프로필과 함께 `201 Created`를 반환합니다.
 
 MySQL 접속은 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`로 설정합니다. 기본 주소는 `127.0.0.1:13306`입니다.
+
+## 가입 프로필 생성 이벤트
+
+Member는 Auth의 `ProfileCreationRequested` 이벤트를 받아 이름, 선택 국가 코드, 자동 생성한 기본 닉네임을 저장합니다. 동일 사용자 UUID의 프로필이 이미 있으면 기존 프로필을 유지합니다.
+
+- Kafka 접속은 `KAFKA_BOOTSTRAP_SERVERS`로 지정합니다. 기본값은 `localhost:9092`입니다.
+- 토픽은 Auth와 같은 `AUTH_USER_TOPIC`을 사용합니다. 기본값은 `nirvana.auth.user`입니다.
+- 컨슈머 그룹은 `MEMBER_PROFILE_EVENT_GROUP_ID`로 설정합니다. 기본값은 `member-profile-creation`입니다.
+- 저장에 실패하면 해당 레코드를 재시도합니다. 잘못된 이벤트 형식은 토픽·파티션·오프셋을 로그에 남기고 건너뜁니다.
 
 ## 빌드·테스트
 

@@ -1,9 +1,23 @@
 server:
   port: ${SERVER_PORT:8082}
 
+member:
+  profile-events:
+    topic: ${AUTH_USER_TOPIC:nirvana.auth.user}
+    group-id: ${MEMBER_PROFILE_EVENT_GROUP_ID:member-profile-creation}
+
 spring:
   application:
     name: member-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
   datasource:
     url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:13306}/nirvana_member
     username: ${DB_USERNAME:root}
