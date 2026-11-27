@@ -16,6 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 public class UserProfileService {
     private static final int MYSQL_DUPLICATE_KEY = 1062;
+    private static final int DEFAULT_NICKNAME_ATTEMPTS = 5;
     private static final Pattern PROFILE_UNIQUE_KEY =
             Pattern.compile("[.']UK_userProfiles_userUuid'$");
     private static final Pattern NICKNAME_UNIQUE_KEY =
@@ -28,6 +29,23 @@ public class UserProfileService {
         this.profiles = profiles;
         this.transaction = new TransactionTemplate(transactionManager);
         this.transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    public void createFromSignup(UUID userUuid, String name, String countryCode) {
+        for (int attempt = 1; attempt <= DEFAULT_NICKNAME_ATTEMPTS; attempt++) {
+            String nickname = "회원-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+            try {
+                create(userUuid, name, nickname, countryCode);
+                return;
+            } catch (ProfileException exception) {
+                if (exception.errorCode() == ErrorCode.PROFILE_ALREADY_EXISTS) {
+                    return;
+                }
+                if (exception.errorCode() != ErrorCode.NICKNAME_TAKEN || attempt == DEFAULT_NICKNAME_ATTEMPTS) {
+                    throw exception;
+                }
+            }
+        }
     }
 
     public UserProfile create(UUID userUuid, String name, String nickname, String countryCode) {
