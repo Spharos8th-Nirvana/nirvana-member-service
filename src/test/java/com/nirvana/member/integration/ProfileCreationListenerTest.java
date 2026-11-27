@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -16,6 +17,7 @@ import com.nirvana.member.service.UserProfileService;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import java.sql.SQLException;
+import java.util.UUID;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,8 +38,10 @@ class ProfileCreationListenerTest {
 
     private final UserProfileRepository profiles = mock(UserProfileRepository.class);
     private final PlatformTransactionManager transactions = mock(PlatformTransactionManager.class);
+    private final ProfileCreatedPublisher completed = mock(ProfileCreatedPublisher.class);
     private final ProfileCreationListener listener = new ProfileCreationListener(
-            JsonMapper.builder().build(), VALIDATORS.getValidator(), new UserProfileService(profiles, transactions));
+            JsonMapper.builder().build(), VALIDATORS.getValidator(), new UserProfileService(profiles, transactions),
+            completed);
 
     @AfterAll
     static void closeValidatorFactory() {
@@ -81,11 +85,30 @@ class ProfileCreationListenerTest {
     }
 
     @Test
+    void triesCompletionAgainWhenPublishingFailsAfterProfileCommit() {
+        var userUuid = UUID.fromString(USER_UUID);
+        var requestId = UUID.fromString("bc3988dd-fd56-4eed-b359-ee6d63b7076a");
+        when(profiles.existsByUserUuid(USER_UUID)).thenReturn(false, true);
+        doThrow(new IllegalStateException("Kafka unavailable")).doNothing()
+                .when(completed).publish(userUuid, requestId);
+
+        assertThrows(IllegalStateException.class, () -> listener.receive(record(EVENT)));
+        listener.receive(record(EVENT));
+
+        var order = org.mockito.Mockito.inOrder(profiles, transactions, completed);
+        order.verify(profiles).saveAndFlush(any());
+        order.verify(transactions).commit(any());
+        order.verify(completed).publish(userUuid, requestId);
+        verify(profiles).saveAndFlush(any());
+        verify(completed, times(2)).publish(userUuid, requestId);
+    }
+
+    @Test
     void skipsOtherEventTypesAndRejectsInvalidProfileData() {
         listener.receive(record(EVENT.replace("ProfileCreationRequested", "UserWithdrawn")));
         assertThrows(ProfileCreationListener.InvalidProfileCreationEvent.class,
                 () -> listener.receive(record(EVENT.replace("\"kr\"", "\"zz\""))));
-        verifyNoInteractions(profiles);
+        verifyNoInteractions(profiles, completed);
     }
 
     private static ConsumerRecord<String, String> record(String body) {
