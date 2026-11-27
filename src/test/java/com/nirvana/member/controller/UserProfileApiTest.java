@@ -37,6 +37,7 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest(properties = {
+    "spring.kafka.listener.auto-startup=false",
     "member.access.auth-secret=example-service-token",
     "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
             + "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,"
