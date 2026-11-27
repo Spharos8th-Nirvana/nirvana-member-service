@@ -4,6 +4,7 @@ server:
 member:
   profile-events:
     topic: ${AUTH_USER_TOPIC:nirvana.auth.user}
+    completed-topic: ${MEMBER_PROFILE_COMPLETED_TOPIC:nirvana.member.profile-created}
     group-id: ${MEMBER_PROFILE_EVENT_GROUP_ID:member-profile-creation}
 
 spring:
@@ -11,6 +12,14 @@ spring:
     name: member-service
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        "[max.block.ms]": 2000
+        "[request.timeout.ms]": 3000
+        "[delivery.timeout.ms]": 6000
     consumer:
       auto-offset-reset: earliest
       enable-auto-commit: false

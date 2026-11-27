@@ -18,6 +18,7 @@ class ProfileCreationListener {
     private final ObjectMapper json;
     private final Validator validator;
     private final UserProfileService profiles;
+    private final ProfileCreatedPublisher completed;
 
     @KafkaListener(topics = "${member.profile-events.topic}", groupId = "${member.profile-events.group-id}")
     void receive(ConsumerRecord<String, String> record) {
@@ -41,6 +42,7 @@ class ProfileCreationListener {
             throw new InvalidProfileCreationEvent();
         }
         profiles.createFromSignup(request.userUuid(), request.name(), request.normalizedCountryCode());
+        completed.publish(request.userUuid(), request.eventId());
     }
 
     static class InvalidProfileCreationEvent extends RuntimeException {

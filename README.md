@@ -57,6 +57,7 @@ Member는 Auth의 `ProfileCreationRequested` 이벤트를 받아 이름, 선택 
 - 토픽은 Auth와 같은 `AUTH_USER_TOPIC`을 사용합니다. 기본값은 `nirvana.auth.user`입니다.
 - 컨슈머 그룹은 `MEMBER_PROFILE_EVENT_GROUP_ID`로 설정합니다. 기본값은 `member-profile-creation`입니다.
 - 저장에 실패하면 해당 레코드를 재시도합니다. 잘못된 이벤트 형식은 토픽·파티션·오프셋을 로그에 남기고 건너뜁니다.
+- DB 커밋 후 사용자 UUID를 키로 `ProfileCreated`를 발행합니다. 본문에는 `eventType`, `userUuid`, 원래 요청의 `requestEventId`가 들어갑니다. 완료 토픽은 `MEMBER_PROFILE_COMPLETED_TOPIC`으로 설정하며 기본값은 `nirvana.member.profile-created`입니다. 완료 발행에 실패하면 요청 이벤트를 다시 처리합니다.
 
 ## 빌드·테스트
 
