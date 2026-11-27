@@ -1,4 +1,4 @@
-package com.nirvana.member.profile.dto;
+package com.nirvana.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

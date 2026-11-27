@@ -1,4 +1,4 @@
-package com.nirvana.member.profile.domain;
+package com.nirvana.member.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

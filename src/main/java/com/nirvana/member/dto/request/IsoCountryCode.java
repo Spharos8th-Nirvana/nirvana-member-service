@@ -1,4 +1,4 @@
-package com.nirvana.member.profile.dto;
+package com.nirvana.member.dto.request;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;

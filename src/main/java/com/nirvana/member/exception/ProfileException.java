@@ -1,4 +1,4 @@
-package com.nirvana.member.profile.exception;
+package com.nirvana.member.exception;
 
 public class ProfileException extends RuntimeException {
     private final ErrorCode errorCode;
